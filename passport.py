@@ -35,13 +35,13 @@ def get_password(prompt, second_prompt=False):
         password = getpass.getpass(prompt)
     return password
 
-def get_key(passphrase):
+def get_key(password):
     h = SHA256.new()
-    h.update(passphrase.encode())
+    h.update(password.encode())
     return h.hexdigest()[:16]
 
 def encrypt_and_write(password_database, filename, database_password=False):
-    # get passphrase from user if one isn't provided
+    # get password from user if one isn't provided
     if not database_password:
         database_password = get_password(
                 "Enter new database password: ",
@@ -57,8 +57,8 @@ def encrypt_and_write(password_database, filename, database_password=False):
     outfile.close()
 
 def read_and_decrypt(filename):
-    # get the passphrase from the user
-    # TODO implement bad passphrase checking
+    # get the password from the user
+    # TODO implement bad password checking
     password_database = " "
     password = get_password("Enter database password: ")
     # read and decrypt the password database
@@ -68,8 +68,8 @@ def read_and_decrypt(filename):
     password_database = cipher.decrypt(password_database)
     password_database = password_database.decode().strip('"')
     password_database = json.loads(password_database)
-    # need to turn the passphrase so we can use it later
-    return password_database, passphrase
+    # need to turn the password so we can use it later
+    return password_database, password
 
 def create(database_name):
     blank_database = json.dumps({})
