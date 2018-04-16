@@ -50,6 +50,63 @@ def read_and_decrypt(filename):
     # need to turn the passphrase so we can use it later
     return password_database, passphrase
 
+def create(args):
+    blank_database = json.dumps({})
+    encrypt_and_write(blank_database, args.database)
+    print("New database created")
+
+def list_accounts(args):
+    # notify the user if the database is empty
+    if password_database == {}:
+        print("'"+args.database+"' is empty.")
+    # otherwise display all keys in the database in alphabetical order
+    else:
+        print('\n'.join(sorted(password_database.keys())))
+
+def edit(args):
+    # allow the user to update the entry
+    if args.account in password_database.keys():
+        existing_entry = password_database[args.account]
+    else:
+        existing_entry = ""
+    # TODO generate random name for the temp file
+    os.system("echo '"+existing_entry+"' > /tmp/blergh")
+    os.system("vi /tmp/blergh")
+    password_database[args.account] = open("/tmp/blergh","r").read()
+    os.system("rm /tmp/blergh")
+    # encrypt the database and write it to disk
+    encrypt_and_write(password_database, args.database, passphrase=passphrase)
+    print("Updated information for '"+args.account+"'")
+
+def display(args):
+    # confirm that the account exists in the database
+    if args.account not in password_database.keys():
+        print("'"+args.account+"' does not exist in '"+args.database+"'")
+    # if it does, then display the password for the particular account specified
+    else:
+        # TODO add a display timeout?
+        # TODO implement a better display method (using ncurses?)
+        os.system("echo '"+password_database[args.account]+"' | less")
+
+def remove(args):
+    # check to make sure the account exists in the database
+    if args.account not in password_database.keys():
+        print("'"+args.account+"' does not exist in '"+args.database+"'")
+    # otherwise, proceed with confirmation of deletion
+    else:
+        # confirm that the user really wants to delete the account
+        response = ""
+        while response not in ["y","Y","n","N"]:
+            response = input("Are you sure you want to delete '"+args.account+"'? (y/n) ")
+        if response in ["y","Y"]:
+            # delete the account
+            del password_database[args.account]
+            # encrypt and write new password database to disk
+            encrypt_and_write(password_database, args.database, passphrase=passphrase)
+            print("Removed account '"+args.account+"'")
+        else:
+            print("Aborted")
+
 # make top-level parser
 parser = argparse.ArgumentParser(description="display and manage passwords")
 parser.add_argument("database", type=str, help="the database to work on")
@@ -77,7 +134,8 @@ args = parser.parse_args()
 
 # if we're not creating a new database
 if args.choice != "create":
-    # read and decrypt the password database
+    # read and decrypt the existing database
+    global password_database, passphrase
     password_database, passphrase = read_and_decrypt(args.database)
 
 # if the user doesn't choose a subcommand, then display help and exit
@@ -86,56 +144,14 @@ if args.choice == None:
     sys.exit(1)
 # otherwise, execute the appropriate subcommand
 elif args.choice == "create":
-    blank_database = json.dumps({})
-    encrypt_and_write(blank_database, args.database)
-    print("New database created")
+    create(args)
 elif args.choice == "list":
-    # notify the user if the database is empty
-    if password_database == {}:
-        print("'"+args.database+"' is empty.")
-    # otherwise display all keys in the database in alphabetical order
-    else:
-        print('\n'.join(sorted(password_database.keys())))
+    list_accounts(args)
 elif args.choice == "edit":
-    # allow the user to update the entry
-    if args.account in password_database.keys():
-        existing_entry = password_database[args.account]
-    else:
-        existing_entry = ""
-    # TODO generate random name for the temp file
-    os.system("echo '"+existing_entry+"' > /tmp/blergh")
-    os.system("vi /tmp/blergh")
-    password_database[args.account] = open("/tmp/blergh","r").read()
-    os.system("rm /tmp/blergh")
-    # encrypt the database and write it to disk
-    encrypt_and_write(password_database, args.database, passphrase=passphrase)
-    print("Updated information for '"+args.account+"'")
+    edit(args)
 elif args.choice == "search":
-    print("searching")
+    print("Searching is not yet implemented.")
 elif args.choice == "display":
-    # confirm that the account exists in the database
-    if args.account not in password_database.keys():
-        print("'"+args.account+"' does not exist in '"+args.database+"'")
-    # if it does, then display the password for the particular account specified
-    else:
-        # TODO add a display timeout?
-        # TODO implement a better display method (using ncurses?)
-        os.system("echo '"+password_database[args.account]+"' | less")
+    display(args)
 elif args.choice == "remove":
-    # check to make sure the account exists in the database
-    if args.account not in password_database.keys():
-        print("'"+args.account+"' does not exist in '"+args.database+"'")
-    # otherwise, proceed with confirmation of deletion
-    else:
-        # confirm that the user really wants to delete the account
-        response = ""
-        while response not in ["y","Y","n","N"]:
-            response = input("Are you sure you want to delete '"+args.account+"'? (y/n) ")
-        if response in ["y","Y"]:
-            # delete the account
-            del password_database[args.account]
-            # encrypt and write new password database to disk
-            encrypt_and_write(password_database, args.database, passphrase=passphrase)
-            print("Removed account '"+args.account+"'")
-        else:
-            print("Aborted")
+    remove(args)
