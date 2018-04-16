@@ -11,21 +11,42 @@ from pprint import pprint
 from Crypto.Hash import SHA256
 from Crypto.Cipher import AES
 
+def get_password(prompt, second_prompt=False):
+    """TODO I can't figure out how to write an automated test for this function.
+    If you can, please add one. Until then, you can test this function manually
+    by running the following:
+
+    echo "import passport; print(passport.get_password('prompt '))" | python
+    echo "import passport; print(passport.get_password('first ',
+        second_prompt='second '))" | python
+
+    The first line will take in a single password and print it.
+    The second line will take in two passwords and print them if they match.
+    Otherwise, it will tell you they don't match and prompt you again."""
+    if second_prompt:
+        first_attempt, second_attempt = "0", "1"
+        while first_attempt != second_attempt:
+            if first_attempt != "0" or second_attempt != "1":
+                print("Passwords do not match")
+            first_attempt = getpass.getpass(prompt)
+            second_attempt = getpass.getpass(second_prompt)
+        password = first_attempt
+    else:
+        password = getpass.getpass(prompt)
+    return password
+
 def get_key(passphrase):
     h = SHA256.new()
     h.update(passphrase.encode())
     return h.hexdigest()[:16]
 
-def encrypt_and_write(password_database, filename, database_password=None):
+def encrypt_and_write(password_database, filename, database_password=False):
     # get passphrase from user if one isn't provided
-    if database_password == None:
-        database_password, double_check = "", " "
-        while database_password != double_check:
-            if database_password != "" or double_check != " ":
-                print("Passwords do not match")
-            database_password = getpass.getpass("Enter a password: ")
-            double_check = getpass.getpass("Enter it again: ")
-    # TODO prompt the user to choose between using the same passphrase or a new one
+    if not database_password:
+        database_password = get_password(
+                "Enter new database password: ",
+                second_prompt="Enter it again: ")
+    # TODO prompt user to choose between using the same password or a new one
     password_database = json.dumps(password_database)
     # encrypt the database and write it to disk
     key = get_key(database_password)
@@ -39,10 +60,10 @@ def read_and_decrypt(filename):
     # get the passphrase from the user
     # TODO implement bad passphrase checking
     password_database = " "
-    passphrase = getpass.getpass("Enter database password: ")
+    password = get_password("Enter database password: ")
     # read and decrypt the password database
     password_database = open(filename, "rb").read()
-    key = get_key(passphrase)
+    key = get_key(password)
     cipher = AES.new(key, AES.MODE_CFB, key)
     password_database = cipher.decrypt(password_database)
     password_database = password_database.decode().strip('"')
