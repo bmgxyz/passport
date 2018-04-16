@@ -16,19 +16,19 @@ def get_key(passphrase):
     h.update(passphrase.encode())
     return h.hexdigest()[:16]
 
-def encrypt_and_write(password_database, filename, passphrase=None):
+def encrypt_and_write(password_database, filename, database_password=None):
     # get passphrase from user if one isn't provided
-    if passphrase == None:
-        passphrase, double_check = "", " "
-        while passphrase != double_check:
-            if passphrase != "" or double_check != " ":
+    if database_password == None:
+        database_password, double_check = "", " "
+        while database_password != double_check:
+            if database_password != "" or double_check != " ":
                 print("Passwords do not match")
-            passphrase = getpass.getpass("Enter a password: ")
+            database_password = getpass.getpass("Enter a password: ")
             double_check = getpass.getpass("Enter it again: ")
     # TODO prompt the user to choose between using the same passphrase or a new one
     password_database = json.dumps(password_database)
     # encrypt the database and write it to disk
-    key = get_key(passphrase)
+    key = get_key(database_password)
     cipher = AES.new(key, AES.MODE_CFB, key)
     password_database = cipher.encrypt(password_database.encode())
     outfile = open(filename, "wb")
@@ -50,60 +50,60 @@ def read_and_decrypt(filename):
     # need to turn the passphrase so we can use it later
     return password_database, passphrase
 
-def create(args):
+def create(database_name):
     blank_database = json.dumps({})
-    encrypt_and_write(blank_database, args.database)
+    encrypt_and_write(blank_database, database_name)
     print("New database created")
 
-def list_accounts(args):
+def list_accounts(password_database, database_name):
     # notify the user if the database is empty
     if password_database == {}:
-        print("'"+args.database+"' is empty.")
+        print("'"+database_name+"' is empty.")
     # otherwise display all keys in the database in alphabetical order
     else:
         print('\n'.join(sorted(password_database.keys())))
 
-def edit(args):
+def edit(password_database, database_name, account_name, database_password):
     # allow the user to update the entry
-    if args.account in password_database.keys():
-        existing_entry = password_database[args.account]
+    if account_name in password_database.keys():
+        existing_entry = password_database[account_name]
     else:
         existing_entry = ""
     # TODO generate random name for the temp file
     os.system("echo '"+existing_entry+"' > /tmp/blergh")
     os.system("vi /tmp/blergh")
-    password_database[args.account] = open("/tmp/blergh","r").read()
+    password_database[account_name] = open("/tmp/blergh","r").read()
     os.system("rm /tmp/blergh")
     # encrypt the database and write it to disk
-    encrypt_and_write(password_database, args.database, passphrase=passphrase)
-    print("Updated information for '"+args.account+"'")
+    encrypt_and_write(password_database, database_name, database_password=database_password)
+    print("Updated information for '"+account_name+"'")
 
-def display(args):
+def display(password_database, database_name, account_name):
     # confirm that the account exists in the database
-    if args.account not in password_database.keys():
-        print("'"+args.account+"' does not exist in '"+args.database+"'")
+    if account_name not in password_database.keys():
+        print("'"+account_name+"' does not exist in '"+database_name+"'")
     # if it does, then display the password for the particular account specified
     else:
         # TODO add a display timeout?
         # TODO implement a better display method (using ncurses?)
-        os.system("echo '"+password_database[args.account]+"' | less")
+        os.system("echo '"+password_database[account_name]+"' | less")
 
-def remove(args):
+def remove(password_database, database_name, account_name, database_password):
     # check to make sure the account exists in the database
-    if args.account not in password_database.keys():
-        print("'"+args.account+"' does not exist in '"+args.database+"'")
+    if account_name not in password_database.keys():
+        print("'"+account_name+"' does not exist in '"+database_name+"'")
     # otherwise, proceed with confirmation of deletion
     else:
         # confirm that the user really wants to delete the account
         response = ""
         while response not in ["y","Y","n","N"]:
-            response = input("Are you sure you want to delete '"+args.account+"'? (y/n) ")
+            response = input("Are you sure you want to delete '"+account_name+"'? (y/n) ")
         if response in ["y","Y"]:
             # delete the account
-            del password_database[args.account]
+            del password_database[account_name]
             # encrypt and write new password database to disk
-            encrypt_and_write(password_database, args.database, passphrase=passphrase)
-            print("Removed account '"+args.account+"'")
+            encrypt_and_write(password_database, database_name, database_password=database_password)
+            print("Removed account '"+account_name+"'")
         else:
             print("Aborted")
 
@@ -136,8 +136,7 @@ if __name__ == "__main__":
     # if we're not creating a new database
     if args.choice != "create":
         # read and decrypt the existing database
-        global password_database, passphrase
-        password_database, passphrase = read_and_decrypt(args.database)
+        password_database, database_password = read_and_decrypt(args.database)
 
     # if the user doesn't choose a subcommand, then display help and exit
     if args.choice == None:
@@ -145,14 +144,14 @@ if __name__ == "__main__":
         sys.exit(1)
     # otherwise, execute the appropriate subcommand
     elif args.choice == "create":
-        create(args)
+        create(args.database)
     elif args.choice == "list":
-        list_accounts(args)
+        list_accounts(password_database, args.database)
     elif args.choice == "edit":
-    edit(args)
+        edit(password_database, args.database, args.account, database_password)
     elif args.choice == "search":
         print("Searching is not yet implemented.")
     elif args.choice == "display":
-        display(args)
+        display(password_database, args.database, args.account)
     elif args.choice == "remove":
-        remove(args)
+        remove(password_database, args.database, args.account, database_password)
