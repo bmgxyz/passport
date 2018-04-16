@@ -107,51 +107,52 @@ def remove(args):
         else:
             print("Aborted")
 
-# make top-level parser
-parser = argparse.ArgumentParser(description="display and manage passwords")
-parser.add_argument("database", type=str, help="the database to work on")
-subparsers = parser.add_subparsers(dest="choice")
-# 'create' subcommand
-create_parser = subparsers.add_parser("create", help="make a new blank database")
-# 'list' subcommand
-list_parser = subparsers.add_parser("list", help="show a list of all entries in the database")
-# 'add' subcommand
-edit_parser = subparsers.add_parser("edit", help="make a new entry in the selected database")
-edit_parser.add_argument("account", type=str, help="friendly unique identifier for the new entry")
-# TODO 'search' subcommand
-# 'display' subcommand
-display_parser = subparsers.add_parser("display", help="display the password associated with a particular account")
-display_parser.add_argument("account", type=str, help="the account to display the password for")
-# 'modify' subcommand
-modify_parser = subparsers.add_parser("modify", help="change the password for an account")
-modify_parser.add_argument("account", help="the account to change the password for")
-# TODO 'change-master-password' subcommand
-# 'remove' subcommand
-remove_parser = subparsers.add_parser("remove", help="delete an account from the database")
-remove_parser.add_argument("account", type=str, help="name of the account to remove")
-# parse all arguments and save namespace object
-args = parser.parse_args()
+if __name__ == "__main__":
+    # make top-level parser
+    parser = argparse.ArgumentParser(description="display and manage passwords")
+    parser.add_argument("database", type=str, help="the database to work on")
+    subparsers = parser.add_subparsers(dest="choice")
+    # 'create' subcommand
+    create_parser = subparsers.add_parser("create", help="make a new blank database")
+    # 'list' subcommand
+    list_parser = subparsers.add_parser("list", help="show a list of all entries in the database")
+    # 'add' subcommand
+    edit_parser = subparsers.add_parser("edit", help="make a new entry in the selected database")
+    edit_parser.add_argument("account", type=str, help="friendly unique identifier for the new entry")
+    # TODO 'search' subcommand
+    # 'display' subcommand
+    display_parser = subparsers.add_parser("display", help="display the password associated with a particular account")
+    display_parser.add_argument("account", type=str, help="the account to display the password for")
+    # 'modify' subcommand
+    modify_parser = subparsers.add_parser("modify", help="change the password for an account")
+    modify_parser.add_argument("account", help="the account to change the password for")
+    # TODO 'change-master-password' subcommand
+    # 'remove' subcommand
+    remove_parser = subparsers.add_parser("remove", help="delete an account from the database")
+    remove_parser.add_argument("account", type=str, help="name of the account to remove")
+    # parse all arguments and save namespace object
+    args = parser.parse_args()
 
-# if we're not creating a new database
-if args.choice != "create":
-    # read and decrypt the existing database
-    global password_database, passphrase
-    password_database, passphrase = read_and_decrypt(args.database)
+    # if we're not creating a new database
+    if args.choice != "create":
+        # read and decrypt the existing database
+        global password_database, passphrase
+        password_database, passphrase = read_and_decrypt(args.database)
 
-# if the user doesn't choose a subcommand, then display help and exit
-if args.choice == None:
-    parser.print_help(sys.stderr)
-    sys.exit(1)
-# otherwise, execute the appropriate subcommand
-elif args.choice == "create":
-    create(args)
-elif args.choice == "list":
-    list_accounts(args)
-elif args.choice == "edit":
+    # if the user doesn't choose a subcommand, then display help and exit
+    if args.choice == None:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+    # otherwise, execute the appropriate subcommand
+    elif args.choice == "create":
+        create(args)
+    elif args.choice == "list":
+        list_accounts(args)
+    elif args.choice == "edit":
     edit(args)
-elif args.choice == "search":
-    print("Searching is not yet implemented.")
-elif args.choice == "display":
-    display(args)
-elif args.choice == "remove":
-    remove(args)
+    elif args.choice == "search":
+        print("Searching is not yet implemented.")
+    elif args.choice == "display":
+        display(args)
+    elif args.choice == "remove":
+        remove(args)
