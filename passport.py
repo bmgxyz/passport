@@ -56,24 +56,27 @@ def encrypt_and_write(password_database, filename, database_password=False):
     outfile.write(password_database)
     outfile.close()
 
-def read_and_decrypt(filename):
+def read_and_decrypt(filename, database_password=False):
     # get the password from the user
     # TODO implement bad password checking
     password_database = " "
-    password = get_password("Enter database password: ")
+    if not database_password:
+        database_password = get_password("Enter database password: ")
     # read and decrypt the password database
-    password_database = open(filename, "rb").read()
-    key = get_key(password)
+    password_database_file = open(filename, "rb")
+    key = get_key(database_password)
     cipher = AES.new(key, AES.MODE_CFB, key)
-    password_database = cipher.decrypt(password_database)
-    password_database = password_database.decode().strip('"')
+    password_database = cipher.decrypt(password_database_file.read())
+    password_database_file.close()
+    password_database = password_database.decode()
+    password_database = password_database.strip('"')
     password_database = json.loads(password_database)
     # need to turn the password so we can use it later
-    return password_database, password
+    return password_database, database_password
 
-def create(database_name):
+def create(database_name, database_password=False):
     blank_database = json.dumps({})
-    encrypt_and_write(blank_database, database_name)
+    encrypt_and_write(blank_database, database_name, database_password)
     print("New database created")
 
 def list_accounts(password_database, database_name):
