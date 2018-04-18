@@ -68,7 +68,7 @@ def read_and_decrypt(filename, database_password=False):
     password_database = cipher.decrypt(password_database_file.read())
     password_database_file.close()
     # if the first character is '{', then the key is probably good, so proceed
-    if password_database[0] == 34:
+    if password_database[0] == 34 or password_database[0] == 123:
         password_database = password_database.decode()
         password_database = password_database.strip('"')
         password_database = json.loads(password_database)
@@ -78,13 +78,8 @@ def read_and_decrypt(filename, database_password=False):
         # the key is wrong, so raise an error
         raise Exception("BadKeyError")
 
-def create(database_name, database_password=False, silent=False):
-    blank_database = json.dumps({})
-    encrypt_and_write(blank_database, database_name, database_password)
-    if not silent:
-        print("New database created")
-
 def remove(password_database, database_name, account_name, database_password):
+    # TODO refactor this back to not-a-function
     # check to make sure the account exists in the database
     if account_name not in password_database.keys():
         print("'"+account_name+"' does not exist in '"+database_name+"'")
@@ -119,9 +114,6 @@ if __name__ == "__main__":
     # 'display' subcommand
     display_parser = subparsers.add_parser("display", help="display the password associated with a particular account")
     display_parser.add_argument("account", type=str, help="the account to display the password for")
-    # 'modify' subcommand
-    modify_parser = subparsers.add_parser("modify", help="change the password for an account")
-    modify_parser.add_argument("account", help="the account to change the password for")
     # TODO 'change-master-password' subcommand
     # 'remove' subcommand
     remove_parser = subparsers.add_parser("remove", help="delete an account from the database")
@@ -146,6 +138,7 @@ if __name__ == "__main__":
     elif args.choice == "edit":
         # read and decrypt password database from disk
         password_database, database_password = read_and_decrypt(args.database)
+        print(database_password)
         # allow the user to update the entry
         account_name = args.account
         database_name = args.database
@@ -177,4 +170,25 @@ if __name__ == "__main__":
             # TODO implement a better display method (using ncurses?)
             os.system("echo '"+password_database[account_name]+"' | less")
     elif args.choice == "remove":
-        print(remove(password_database, args.database, args.account, database_password))
+        # TODO refactor this back to not-a-function
+        account_name = args.account
+        database_name = args.database
+        # decrypt password database
+        password_database, database_password = read_and_decrypt(database_name)
+        # check to make sure the account exists in the database
+        if account_name not in password_database.keys():
+            print("'"+account_name+"' does not exist in '"+database_name+"'")
+        # otherwise, proceed with confirmation of deletion
+        else:
+            # confirm that the user really wants to delete the account
+            response = ""
+            while response not in ["y","Y","n","N"]:
+                response = input("Are you sure you want to delete '"+account_name+"'? (y/n) ")
+            if response in ["y","Y"]:
+                # delete the account
+                del password_database[account_name]
+                # encrypt and write new password database to disk
+                encrypt_and_write(password_database, database_name, database_password=database_password)
+                print("Removed account '"+account_name+"'")
+            else:
+                print("Aborted")
