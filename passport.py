@@ -143,6 +143,8 @@ if __name__ == "__main__":
         # read and decrypt password database from disk
         password_database, database_password = read_and_decrypt(args.database)
         # allow the user to update the entry
+        account_name = args.account
+        database_name = args.database
         if account_name in password_database.keys():
             existing_entry = password_database[account_name]
         else:
@@ -159,8 +161,10 @@ if __name__ == "__main__":
     elif args.choice == "search":
         print("Searching is not yet implemented.")
     elif args.choice == "display":
-        password_database = read_and_decrypt(args.database)
+        password_database, database_password = read_and_decrypt(args.database)
         # confirm that the account exists in the database
+        account_name = args.account
+        database_name = args.database
         if account_name not in password_database.keys():
             print("'"+account_name+"' does not exist in '"+database_name+"'")
         # if it does, then display the password for the particular account specified
