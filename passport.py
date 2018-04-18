@@ -80,22 +80,6 @@ def create(database_name, database_password=False, silent=False):
     if not silent:
         print("New database created")
 
-def list_accounts(password_database, database_name, silent=False):
-    # notify the user if the database is empty
-    if password_database == {}:
-        output = "'"+database_name+"' is empty."
-        if not silent:
-            print(output)
-        else:
-            return output
-    # otherwise display all keys in the database in alphabetical order
-    else:
-        output = '\n'.join(sorted(password_database.keys()))
-        if not silent:
-            print(output)
-        else:
-            return output
-
 def remove(password_database, database_name, account_name, database_password):
     # check to make sure the account exists in the database
     if account_name not in password_database.keys():
@@ -147,7 +131,8 @@ if __name__ == "__main__":
         sys.exit(1)
     # otherwise, execute the appropriate subcommand
     elif args.choice == "create":
-        print(create(args.database))
+        blank_database = json.dumps({})
+        encrypt_and_write(blank_database, args.database)
     elif args.choice == "list":
         password_database, database_password = read_and_decrypt(args.database)
         if password_database == {}:
