@@ -58,7 +58,6 @@ def encrypt_and_write(password_database, filename, database_password=False):
 
 def read_and_decrypt(filename, database_password=False):
     # get the password from the user
-    # TODO implement bad password checking
     password_database = " "
     if not database_password:
         database_password = get_password("Enter database password: ")
@@ -68,11 +67,16 @@ def read_and_decrypt(filename, database_password=False):
     cipher = AES.new(key, AES.MODE_CFB, key)
     password_database = cipher.decrypt(password_database_file.read())
     password_database_file.close()
-    password_database = password_database.decode()
-    password_database = password_database.strip('"')
-    password_database = json.loads(password_database)
-    # need to turn the password so we can use it later
-    return password_database, database_password
+    # if the first character is '{', then the key is probably good, so proceed
+    if password_database[0] == 34:
+        password_database = password_database.decode()
+        password_database = password_database.strip('"')
+        password_database = json.loads(password_database)
+        # need to turn the password so we can use it later
+        return password_database, database_password
+    else:
+        # the key is wrong, so raise an error
+        raise Exception("BadKeyError")
 
 def create(database_name, database_password=False, silent=False):
     blank_database = json.dumps({})
