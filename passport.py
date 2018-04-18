@@ -96,21 +96,6 @@ def list_accounts(password_database, database_name, silent=False):
         else:
             return output
 
-def edit(password_database, database_name, account_name, database_password):
-    # allow the user to update the entry
-    if account_name in password_database.keys():
-        existing_entry = password_database[account_name]
-    else:
-        existing_entry = ""
-    # TODO generate random name for the temp file
-    os.system("echo '"+existing_entry+"' > /tmp/blergh")
-    os.system("vi /tmp/blergh")
-    password_database[account_name] = open("/tmp/blergh","r").read()
-    os.system("rm /tmp/blergh")
-    # encrypt the database and write it to disk
-    encrypt_and_write(password_database, database_name, database_password=database_password)
-    return "Updated information for '"+account_name+"'"
-
 def display(password_database, database_name, account_name):
     # confirm that the account exists in the database
     if account_name not in password_database.keys():
@@ -177,14 +162,29 @@ if __name__ == "__main__":
         sys.exit(1)
     # otherwise, execute the appropriate subcommand
     elif args.choice == "create":
-        create(args.database)
+        print(create(args.database))
     elif args.choice == "list":
-        list_accounts(password_database, args.database)
+        print(list_accounts(password_database, args.database))
     elif args.choice == "edit":
-        edit(password_database, args.database, args.account, database_password)
+        # read and decrypt password database from disk
+        password_database = read_and_decrypt(args.database)
+        # allow the user to update the entry
+        if account_name in password_database.keys():
+            existing_entry = password_database[account_name]
+        else:
+            existing_entry = ""
+        # get entry data from user
+        # TODO generate random name for the temp file
+        os.system("echo '"+existing_entry+"' > /tmp/blergh")
+        os.system("vi /tmp/blergh")
+        password_database[account_name] = open("/tmp/blergh","r").read()
+        os.system("rm /tmp/blergh")
+        # encrypt the database and write it to disk
+        encrypt_and_write(password_database, database_name, database_password=database_password)
+        output = "Updated information for '"+account_name+"'"
     elif args.choice == "search":
         print("Searching is not yet implemented.")
     elif args.choice == "display":
         display(password_database, args.database, args.account)
     elif args.choice == "remove":
-        remove(password_database, args.database, args.account, database_password)
+        print(remove(password_database, args.database, args.account, database_password))
