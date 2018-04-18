@@ -74,18 +74,27 @@ def read_and_decrypt(filename, database_password=False):
     # need to turn the password so we can use it later
     return password_database, database_password
 
-def create(database_name, database_password=False):
+def create(database_name, database_password=False, silent=False):
     blank_database = json.dumps({})
     encrypt_and_write(blank_database, database_name, database_password)
-    print("New database created")
+    if not silent:
+        print("New database created")
 
-def list_accounts(password_database, database_name):
+def list_accounts(password_database, database_name, silent=False):
     # notify the user if the database is empty
     if password_database == {}:
-        print("'"+database_name+"' is empty.")
+        output = "'"+database_name+"' is empty."
+        if not silent:
+            print(output)
+        else:
+            return output
     # otherwise display all keys in the database in alphabetical order
     else:
-        print('\n'.join(sorted(password_database.keys())))
+        output = '\n'.join(sorted(password_database.keys()))
+        if not silent:
+            print(output)
+        else:
+            return output
 
 def edit(password_database, database_name, account_name, database_password):
     # allow the user to update the entry
@@ -100,7 +109,7 @@ def edit(password_database, database_name, account_name, database_password):
     os.system("rm /tmp/blergh")
     # encrypt the database and write it to disk
     encrypt_and_write(password_database, database_name, database_password=database_password)
-    print("Updated information for '"+account_name+"'")
+    return "Updated information for '"+account_name+"'"
 
 def display(password_database, database_name, account_name):
     # confirm that the account exists in the database
