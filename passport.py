@@ -96,16 +96,6 @@ def list_accounts(password_database, database_name, silent=False):
         else:
             return output
 
-def display(password_database, database_name, account_name):
-    # confirm that the account exists in the database
-    if account_name not in password_database.keys():
-        print("'"+account_name+"' does not exist in '"+database_name+"'")
-    # if it does, then display the password for the particular account specified
-    else:
-        # TODO add a display timeout?
-        # TODO implement a better display method (using ncurses?)
-        os.system("echo '"+password_database[account_name]+"' | less")
-
 def remove(password_database, database_name, account_name, database_password):
     # check to make sure the account exists in the database
     if account_name not in password_database.keys():
@@ -151,11 +141,6 @@ if __name__ == "__main__":
     # parse all arguments and save namespace object
     args = parser.parse_args()
 
-    # if we're not creating a new database
-    if args.choice != "create":
-        # read and decrypt the existing database
-        password_database, database_password = read_and_decrypt(args.database)
-
     # if the user doesn't choose a subcommand, then display help and exit
     if args.choice == None:
         parser.print_help(sys.stderr)
@@ -164,10 +149,14 @@ if __name__ == "__main__":
     elif args.choice == "create":
         print(create(args.database))
     elif args.choice == "list":
-        print(list_accounts(password_database, args.database))
+        password_database, database_password = read_and_decrypt(args.database)
+        if password_database == {}:
+            print("'"+args.database+"' is empty.")
+        else:
+            print('\n'.join(sorted(password_database.keys())))
     elif args.choice == "edit":
         # read and decrypt password database from disk
-        password_database = read_and_decrypt(args.database)
+        password_database, database_password = read_and_decrypt(args.database)
         # allow the user to update the entry
         if account_name in password_database.keys():
             existing_entry = password_database[account_name]
@@ -185,6 +174,14 @@ if __name__ == "__main__":
     elif args.choice == "search":
         print("Searching is not yet implemented.")
     elif args.choice == "display":
-        display(password_database, args.database, args.account)
+        password_database = read_and_decrypt(args.database)
+        # confirm that the account exists in the database
+        if account_name not in password_database.keys():
+            print("'"+account_name+"' does not exist in '"+database_name+"'")
+        # if it does, then display the password for the particular account specified
+        else:
+            # TODO add a display timeout?
+            # TODO implement a better display method (using ncurses?)
+            os.system("echo '"+password_database[account_name]+"' | less")
     elif args.choice == "remove":
         print(remove(password_database, args.database, args.account, database_password))
