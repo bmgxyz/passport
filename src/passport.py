@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import re
 import sys
 import json
 import random
@@ -96,7 +97,11 @@ if __name__ == "__main__":
             type=int,
             required=False,
             help="number of words to make a random password out of")
-    # TODO 'search' subcommand
+    # 'search' subcommand
+    search_parser = subparsers.add_parser("search",
+            help="find all entries that match a regex query")
+    search_parser.add_argument("query",
+            help="the regex or plaintext to search on")
     # 'display' subcommand
     display_parser = subparsers.add_parser("display",
             help="display the password associated with a particular account")
@@ -170,7 +175,21 @@ if __name__ == "__main__":
                 database_password=database_password)
         output = "Updated information for '"+account_name+"'"
     elif args.choice == "search":
-        print("Searching is not yet implemented.")
+        # read and decrypt password database
+        password_database, database_password = read_and_decrypt(args.database)
+        # compile the regex
+        regex = re.compile(args.query)
+        # loop over the database and find all matching entries and titles
+        matches = []
+        for key in password_database.keys():
+            entry = password_database[key]
+            if regex.search(key) or regex.search(entry):
+                matches.append(key)
+        if matches == []:
+            print("No matches in '"+
+                    args.database+"' for query '"+args.query+"'")
+        else:
+            print('\n'.join(matches))
     elif args.choice == "display":
         password_database, database_password = read_and_decrypt(args.database)
         # confirm that the account exists in the database

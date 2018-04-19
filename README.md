@@ -5,6 +5,8 @@ a command-line password manager written in Python
 
 **Write a new empty database file:**
 
+TODO Update this to reflect new features
+
 ```passport <database_name> create```
 
 You will be prompted to set a password for the database. Be sure to use a strong password, and don't forget it. Your data cannot be recovered without the password.
@@ -40,6 +42,7 @@ Full installation instructions TODO
 **Dependencies**
 
 - pycrypto
+- GNU screen
 
 Note that I've only tested ```passport``` under Python 3.5.2 on Ubuntu 16.04.4. YMMV
 
