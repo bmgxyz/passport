@@ -3,13 +3,10 @@
 import os
 import sys
 import json
-import base64
 import getpass
 import argparse
-import subprocess
-from pprint import pprint
-from Crypto.Hash import SHA256
 from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
 
 def get_password(prompt, second_prompt=False):
     """TODO I can't figure out how to write an automated test for this function.
@@ -46,7 +43,6 @@ def encrypt_and_write(password_database, filename, database_password=False):
         database_password = get_password(
                 "Enter new database password: ",
                 second_prompt="Enter it again: ")
-    # TODO prompt user to choose between using the same password or a new one
     password_database = json.dumps(password_database)
     # encrypt the database and write it to disk
     key = get_key(database_password)
@@ -84,21 +80,34 @@ if __name__ == "__main__":
     parser.add_argument("database", type=str, help="the database to work on")
     subparsers = parser.add_subparsers(dest="choice")
     # 'create' subcommand
-    create_parser = subparsers.add_parser("create", help="make a new blank database")
+    create_parser = subparsers.add_parser("create",
+            help="make a new blank database")
     # 'list' subcommand
-    list_parser = subparsers.add_parser("list", help="show a list of all entries in the database")
+    list_parser = subparsers.add_parser("list",
+            help="show a list of all entries in the database")
     # 'edit' subcommand
     # TODO add --generate-password=n flag (where n is the number of words)
-    edit_parser = subparsers.add_parser("edit", help="make a new entry in the selected database")
-    edit_parser.add_argument("account", type=str, help="friendly unique identifier for the new entry")
+    edit_parser = subparsers.add_parser("edit",
+            help="make a new entry in the selected database")
+    edit_parser.add_argument("account",
+            type=str,
+            help="friendly unique identifier for the new entry")
     # TODO 'search' subcommand
     # 'display' subcommand
-    display_parser = subparsers.add_parser("display", help="display the password associated with a particular account")
-    display_parser.add_argument("account", type=str, help="the account to display the password for")
-    # TODO 'change-master-password' subcommand
+    display_parser = subparsers.add_parser("display",
+            help="display the password associated with a particular account")
+    display_parser.add_argument("account",
+            type=str,
+            help="the account to display the password for")
+    # 'changepw' subcommand
+    changepw_parser = subparsers.add_parser("changepw",
+            help="change the master password for a database")
     # 'remove' subcommand
-    remove_parser = subparsers.add_parser("remove", help="delete an account from the database")
-    remove_parser.add_argument("account", type=str, help="name of the account to remove")
+    remove_parser = subparsers.add_parser("remove",
+            help="delete an account from the database")
+    remove_parser.add_argument("account",
+            type=str,
+            help="name of the account to remove")
     # parse all arguments and save namespace object
     args = parser.parse_args()
 
@@ -171,3 +180,9 @@ if __name__ == "__main__":
                 print("Removed account '"+account_name+"'")
             else:
                 print("Aborted")
+    elif args.choice == "changepw":
+        # decrypt password database
+        password_database, database_password = read_and_decrypt(args.database)
+        # encrypt the database with a new password and write it to disk
+        encrypt_and_write(password_database, args.database)
+        print("Database password updated successfully")
