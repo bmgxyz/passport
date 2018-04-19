@@ -78,26 +78,6 @@ def read_and_decrypt(filename, database_password=False):
         # the key is wrong, so raise an error
         raise Exception("BadKeyError")
 
-def remove(password_database, database_name, account_name, database_password):
-    # TODO refactor this back to not-a-function
-    # check to make sure the account exists in the database
-    if account_name not in password_database.keys():
-        print("'"+account_name+"' does not exist in '"+database_name+"'")
-    # otherwise, proceed with confirmation of deletion
-    else:
-        # confirm that the user really wants to delete the account
-        response = ""
-        while response not in ["y","Y","n","N"]:
-            response = input("Are you sure you want to delete '"+account_name+"'? (y/n) ")
-        if response in ["y","Y"]:
-            # delete the account
-            del password_database[account_name]
-            # encrypt and write new password database to disk
-            encrypt_and_write(password_database, database_name, database_password=database_password)
-            print("Removed account '"+account_name+"'")
-        else:
-            print("Aborted")
-
 if __name__ == "__main__":
     # make top-level parser
     parser = argparse.ArgumentParser(description="display and manage passwords")
@@ -107,7 +87,8 @@ if __name__ == "__main__":
     create_parser = subparsers.add_parser("create", help="make a new blank database")
     # 'list' subcommand
     list_parser = subparsers.add_parser("list", help="show a list of all entries in the database")
-    # 'add' subcommand
+    # 'edit' subcommand
+    # TODO add --generate-password=n flag (where n is the number of words)
     edit_parser = subparsers.add_parser("edit", help="make a new entry in the selected database")
     edit_parser.add_argument("account", type=str, help="friendly unique identifier for the new entry")
     # TODO 'search' subcommand
@@ -138,7 +119,6 @@ if __name__ == "__main__":
     elif args.choice == "edit":
         # read and decrypt password database from disk
         password_database, database_password = read_and_decrypt(args.database)
-        print(database_password)
         # allow the user to update the entry
         account_name = args.account
         database_name = args.database
@@ -170,7 +150,6 @@ if __name__ == "__main__":
             # TODO implement a better display method (using ncurses?)
             os.system("echo '"+password_database[account_name]+"' | less")
     elif args.choice == "remove":
-        # TODO refactor this back to not-a-function
         account_name = args.account
         database_name = args.database
         # decrypt password database
