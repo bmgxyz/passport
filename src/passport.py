@@ -3,6 +3,7 @@
 import os
 import sys
 import json
+import random
 import getpass
 import argparse
 from Crypto.Cipher import AES
@@ -136,13 +137,17 @@ if __name__ == "__main__":
         else:
             existing_entry = ""
         # get entry data from user
-        # TODO generate random name for the temp file
-        os.system("echo '"+existing_entry+"' > /tmp/blergh")
-        os.system("vi /tmp/blergh")
-        password_database[account_name] = open("/tmp/blergh","r").read()
-        os.system("rm /tmp/blergh")
+        os.system("touch /tmp/passport.tmp")
+        os.system("chmod 600 /tmp/passport.tmp")
+        os.system("echo '"+existing_entry+"' > /tmp/passport.tmp")
+        os.system("vi /tmp/passport.tmp")
+        password_database[account_name] = open(
+                "/tmp/passport.tmp","r").read().strip("\n")
+        os.system("rm /tmp/passport.tmp")
         # encrypt the database and write it to disk
-        encrypt_and_write(password_database, database_name, database_password=database_password)
+        encrypt_and_write(password_database,
+                database_name,
+                database_password=database_password)
         output = "Updated information for '"+account_name+"'"
     elif args.choice == "search":
         print("Searching is not yet implemented.")
