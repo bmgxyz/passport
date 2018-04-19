@@ -87,12 +87,15 @@ if __name__ == "__main__":
     list_parser = subparsers.add_parser("list",
             help="show a list of all entries in the database")
     # 'edit' subcommand
-    # TODO add --generate-password=n flag (where n is the number of words)
     edit_parser = subparsers.add_parser("edit",
             help="make a new entry in the selected database")
     edit_parser.add_argument("account",
             type=str,
             help="friendly unique identifier for the new entry")
+    edit_parser.add_argument("--generate", "-g",
+            type=int,
+            required=False,
+            help="number of words to make a random password out of")
     # TODO 'search' subcommand
     # 'display' subcommand
     display_parser = subparsers.add_parser("display",
@@ -136,11 +139,28 @@ if __name__ == "__main__":
             existing_entry = password_database[account_name]
         else:
             existing_entry = ""
+        # generate a random password if the user requested one
+        if args.generate != None:
+            wordlist_file = open("./src/wordlist.txt","r")
+            wordlist = []
+            for line in wordlist_file:
+                wordlist.append(line.split("\t")[1].rstrip("\n"))
+            new_password = ""
+            for i in range(args.generate):
+                new_password += random.choice(wordlist)
+            # if the entry is not empty, make space for the new password
+            if existing_entry != "":
+                existing_entry += "\n\n"
+            # append the new password to the entry for editing
+            existing_entry += new_password
         # get entry data from user
         os.system("touch /tmp/passport.tmp")
         os.system("chmod 600 /tmp/passport.tmp")
         os.system("echo '"+existing_entry+"' > /tmp/passport.tmp")
-        os.system("vi /tmp/passport.tmp")
+        # launch vi to edit the entry
+        # but lock the screen session after 30 seconds
+        os.system("screen -c "+
+                sys.path[-1]+"/passport/screenrc vi /tmp/passport.tmp")
         password_database[account_name] = open(
                 "/tmp/passport.tmp","r").read().strip("\n")
         os.system("rm /tmp/passport.tmp")
@@ -158,11 +178,17 @@ if __name__ == "__main__":
         database_name = args.database
         if account_name not in password_database.keys():
             print("'"+account_name+"' does not exist in '"+database_name+"'")
-        # if it does, then display the password for the particular account specified
+        # if it does, then display the password for the account specified
         else:
-            # TODO add a display timeout?
-            # TODO implement a better display method (using ncurses?)
-            os.system("echo '"+password_database[account_name]+"' | less")
+            # write entry to disk so it can be read by less later on
+            os.system("echo '' > /tmp/passport.tmp")
+            os.system("chmod 600 /tmp/passport.tmp")
+            os.system("echo '"+
+                    password_database[account_name]+"' > /tmp/passport.tmp")
+            # launch vi to edit the entry
+            # but lock the screen session after 30 seconds
+            os.system("screen -c "+
+                    sys.path[-1]+"/passport/screenrc less /tmp/passport.tmp")
     elif args.choice == "remove":
         account_name = args.account
         database_name = args.database
@@ -176,12 +202,15 @@ if __name__ == "__main__":
             # confirm that the user really wants to delete the account
             response = ""
             while response not in ["y","Y","n","N"]:
-                response = input("Are you sure you want to delete '"+account_name+"'? (y/n) ")
+                response = input("Are you sure you want to delete '"+
+                        account_name+"'? (y/n) ")
             if response in ["y","Y"]:
                 # delete the account
                 del password_database[account_name]
                 # encrypt and write new password database to disk
-                encrypt_and_write(password_database, database_name, database_password=database_password)
+                encrypt_and_write(password_database,
+                        database_name,
+                        database_password=database_password)
                 print("Removed account '"+account_name+"'")
             else:
                 print("Aborted")
